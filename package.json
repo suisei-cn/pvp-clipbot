@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@octokit/rest": "^17.6.0"
+  },
+  "name": "pvp-clipbot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "description": "Monitor issue comments and clip the audio.",
+  "repository": "https://github.com/suisei-cn/pvp-clipbot",
+  "author": "Outvi V <oss@outv.im>"
+}
