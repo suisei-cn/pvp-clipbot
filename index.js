@@ -117,7 +117,7 @@ ${BASEDIR}/output-${videoId}-${fromValue}-${toValue}.mp3 && rm ${randstr}.flv`;
 }
 
 function getYoutubeCase(videoId, fromValue, toValue) {
-  let fn = ${videoId}-${fromValue}-${toValue};
+  let fn = `${videoId}-${fromValue}-${toValue}`;
   return `/usr/local/bin/youtube-dl -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}" -o inter1-${videoId}.webm && ffmpeg \
 -i inter1-${videoId}.webm \
 -ss ${fromValue} \
