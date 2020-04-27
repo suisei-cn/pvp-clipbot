@@ -43,7 +43,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     }
     let shell = "false";
     if (job.platform === "youtube") {
-      shell = getYoutubeCase(job.id, job.parsedFrom, job.parsedTo);
+      shell = await getYoutubeCase(job.id, job.parsedFrom, job.parsedTo);
     } else if (job.platform === "bilibili") {
       shell = getBilibiliCase(job.id, job.parsedFrom, job.parsedTo);
     }
@@ -104,6 +104,25 @@ function editComment(comment_id, body) {
   });
 }
 
+async function getStdoutOf(cmd) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, stdout, stderr) => {
+      if (error !== null) {
+        reject(error, stderr);
+        return;
+      }
+      resolve(stdout);
+    });
+  });
+}
+
+async function probeYTAudioFormat(vid) {
+  const out = await getStdoutOf(
+    `/usr/local/bin/youtube-dl -F "https://www.youtube.com/watch?v=${videoId}"`
+  );
+  return out.search(/^251/m) ? "webm" : "m4a";
+}
+
 function getBilibiliCase(videoId, fromValue, toValue) {
   let randstr = String(Math.random());
   return `/home/admin/.local/bin/ykdl https://www.bilibili.com/video/${videoId} -O ${randstr} &&
@@ -116,19 +135,20 @@ function getBilibiliCase(videoId, fromValue, toValue) {
 ${BASEDIR}/output-${videoId}-${fromValue}-${toValue}.mp3 && rm ${randstr}.flv`;
 }
 
-function getYoutubeCase(videoId, fromValue, toValue) {
+await function getYoutubeCase(videoId, fromValue, toValue) {
+  let format = probeYTAudioFormat(videoId);
   let fn = `${videoId}-${fromValue}-${toValue}`;
   return `ffmpeg -i $(/usr/local/bin/youtube-dl -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}") \
 -ss ${fromValue} \
 -to ${toValue} \
 -c copy \
-interm-${fn}.webm && \
-ffmpeg -i interm-${fn}.webm\
+interm-${fn}.${format} && \
+ffmpeg -i interm-${fn}.${format}\
 -acodec libmp3lame \
 -ab 192k \
 -af loudnorm=I=-16:TP=-2:LRA=11 \
 ${BASEDIR}/output-${fn}.mp3 && \
-rm interm-${fn}.webm`;
+rm interm-${fn}.${format}`;
 }
 
 function parseTime(str) {
