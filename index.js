@@ -12,7 +12,6 @@ const REPO_OWNER = "suisei-cn";
 const REPO_NAME = "starbuttons";
 const REPO_ISSUE_ID = 5;
 
-
 const octokit = new Octokit({
   auth: GH_TOKEN,
 });
@@ -30,7 +29,8 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
   for (const i of list) {
     if (!TRUSTED_USERS.includes(i.user.login.toLowerCase())) continue;
     if (i.body.includes("!noclip")) continue;
-    let query = i.body.split("\n")[0].replace(/ +/g, " ").split(" ");
+    let cmdline = i.body.split("\n")[0];
+    let query = cmdline.replace(/ +/g, " ").split(" ");
     if (query[0] !== "/clip") continue;
     let job = getJob({
       platform: query[1],
@@ -50,13 +50,17 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     let originalBody = i.body;
     let finalFilename = `output-${job.id}-${job.parsedFrom}-${job.parsedTo}.mp3`;
     console.log("-----------------------------------------");
-    if (fs.existsSync(BASEDIR + "/" + finalFilename)) {
+    let fsExists = fs.existsSync(BASEDIR + "/" + finalFilename);
+    if (fsExists && !cmdline.includes("force")) {
       console.log("Already done:", job);
       editComment(
         i.id,
         `${originalBody}\n\n---\n\n@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).`
       );
       continue;
+    }
+    if (fsExists) {
+      fs.unlinkSync(BASEDIR + "/" + finalFilename);
     }
     (async () => {
       editComment(
