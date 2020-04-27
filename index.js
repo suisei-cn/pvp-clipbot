@@ -118,9 +118,9 @@ async function getStdoutOf(cmd) {
 
 async function probeYTAudioFormat(vid) {
   const out = await getStdoutOf(
-    `/usr/local/bin/youtube-dl -F "https://www.youtube.com/watch?v=${videoId}"`
+    `/usr/local/bin/youtube-dl -F "https://www.youtube.com/watch?v=${vid}"`
   );
-  return out.search(/^251/m) ? "webm" : "m4a";
+  return out.search(/^251/m) ? "m4a" : "webm";
 }
 
 function getBilibiliCase(videoId, fromValue, toValue) {
@@ -135,8 +135,8 @@ function getBilibiliCase(videoId, fromValue, toValue) {
 ${BASEDIR}/output-${videoId}-${fromValue}-${toValue}.mp3 && rm ${randstr}.flv`;
 }
 
-await function getYoutubeCase(videoId, fromValue, toValue) {
-  let format = probeYTAudioFormat(videoId);
+async function getYoutubeCase(videoId, fromValue, toValue) {
+  let format = await probeYTAudioFormat(videoId);
   let fn = `${videoId}-${fromValue}-${toValue}`;
   return `ffmpeg -i $(/usr/local/bin/youtube-dl -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}") \
 -ss ${fromValue} \
