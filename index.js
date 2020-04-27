@@ -118,18 +118,17 @@ ${BASEDIR}/output-${videoId}-${fromValue}-${toValue}.mp3 && rm ${randstr}.flv`;
 
 function getYoutubeCase(videoId, fromValue, toValue) {
   let fn = `${videoId}-${fromValue}-${toValue}`;
-  return `/usr/local/bin/youtube-dl -f bestaudio "https://www.youtube.com/watch?v=${videoId}" -o inter1-${fn}.webm && ffmpeg \
--i inter1-${videoId}.webm \
+  return `ffmpeg -i $(/usr/local/bin/youtube-dl -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}") \
 -ss ${fromValue} \
 -to ${toValue} \
 -c copy \
-inter2-${fn}.webm && \
-ffmpeg -i inter2-${fn}.webm\
+interm-${fn}.webm && \
+ffmpeg -i interm-${fn}.webm\
 -acodec libmp3lame \
 -ab 192k \
 -af loudnorm=I=-16:TP=-2:LRA=11 \
 ${BASEDIR}/output-${fn}.mp3 && \
-rm inter{1,2}-${fn}.webm`;
+rm interm-${fn}.webm`;
 }
 
 function parseTime(str) {
