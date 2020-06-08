@@ -25,7 +25,11 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
       issue_number: REPO_ISSUE_ID,
       since,
     })
-    .then((x) => x.data);
+    .then((x) => x.data)
+    .catch((x) => {
+      console.error("Fail to fetch issue data:", x);
+      return [];
+    });
   for (const i of list) {
     if (!TRUSTED_USERS.includes(i.user.login.toLowerCase())) continue;
     if (i.body.includes("!noclip")) continue;
@@ -41,11 +45,22 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     if (job === false) {
       continue;
     }
-    let shell = "false";
+    let shell = undefined;
     if (job.platform === "youtube") {
-      shell = await getYoutubeCase(job.id, job.parsedFrom, job.parsedTo);
+      shell = await getYoutubeCase(job.id, job.parsedFrom, job.parsedTo).catch(
+        (x) => {
+          console.error("Error getting YouTube video:", x);
+        }
+      );
     } else if (job.platform === "bilibili") {
-      shell = getBilibiliCase(job.id, job.parsedFrom, job.parsedTo);
+      shell = await getBilibiliCase(job.id, job.parsedFrom, job.parsedTo).catch(
+        (x) => {
+          console.error("Error getting Bilibili video:", x);
+        }
+      );
+    }
+    if (!shell) {
+      continue;
     }
     let originalBody = i.body;
     let finalFilename = `output-${job.id}-${job.parsedFrom}-${job.parsedTo}.mp3`;
@@ -70,7 +85,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
       exec(
         shell,
         {
-          timeout: 1200000,
+          timeout: 3600000,
         },
         (error, stdout, stderr) => {
           console.log("STDERR", stderr, "STDOUT", stdout);
@@ -118,12 +133,12 @@ async function getStdoutOf(cmd) {
 
 async function probeYTAudioFormat(vid) {
   const out = await getStdoutOf(
-    `/usr/local/bin/youtube-dl -F "https://www.youtube.com/watch?v=${vid}"`
+    `/usr/bin/youtube-dl -F "https://www.youtube.com/watch?v=${vid}"`
   );
-  return out.search(/^251/m) ? "m4a" : "webm";
+  return out.search(/^251/m) !== -1 ? "webm" : "m4a";
 }
 
-function getBilibiliCase(videoId, fromValue, toValue) {
+async function getBilibiliCase(videoId, fromValue, toValue) {
   let randstr = String(Math.random());
   return `/home/admin/.local/bin/ykdl https://www.bilibili.com/video/${videoId} -O ${randstr} &&
     ffmpeg -i ${randstr}.flv \
@@ -137,13 +152,15 @@ ${BASEDIR}/output-${videoId}-${fromValue}-${toValue}.mp3 && rm ${randstr}.flv`;
 
 async function getYoutubeCase(videoId, fromValue, toValue) {
   let format = await probeYTAudioFormat(videoId);
+  let formatid = format === "webm" ? 251 : 140;
+  console.log(`Finding ${formatid}:${format} for ${videoId}`);
   let fn = `${videoId}-${fromValue}-${toValue}`;
-  return `ffmpeg -i $(/usr/local/bin/youtube-dl -f bestaudio -g "https://www.youtube.com/watch?v=${videoId}") \
+  return `ffmpeg -i $(/usr/bin/youtube-dl -f ${formatid} -g "https://www.youtube.com/watch?v=${videoId}") \
 -ss ${fromValue} \
 -to ${toValue} \
 -c copy \
 interm-${fn}.${format} && \
-ffmpeg -i interm-${fn}.${format}\
+ffmpeg -i interm-${fn}.${format} \
 -acodec libmp3lame \
 -ab 192k \
 -af loudnorm=I=-16:TP=-2:LRA=11 \
@@ -178,4 +195,4 @@ function getJob(obj) {
   };
 }
 
-getIssueAndDo(new Date(new Date() - 180000).toISOString());
+getIssueAndDo(new Date(new Date() - 12000000).toISOString());
