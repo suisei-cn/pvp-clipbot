@@ -68,17 +68,17 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     let fsExists = fs.existsSync(BASEDIR + "/" + finalFilename);
     if (fsExists && !cmdline.includes("force")) {
       console.log("Already done:", job);
-      editComment(
-        i.id,
-        `${originalBody}\n\n---\n\n@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).`
+      createComment(
+        `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).`
       );
+      editAndMarkNoclip(i.id, originalBody);
       continue;
     }
     if (fsExists) {
       fs.unlinkSync(BASEDIR + "/" + finalFilename);
     }
     (async () => {
-      editComment(
+      editAndMarkNoclip(
         i.id,
         `${originalBody}\n\n---\n\nWe are working on it. Hold tight...`
       );
@@ -91,16 +91,16 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
           console.log("STDERR", stderr, "STDOUT", stdout);
           if (error !== null) {
             console.log(`Task by @${i.user.login} has errors:`, error);
-            editComment(
-              i.id,
-              `${originalBody}\n\n---\n\n@${i.user.login}, your clip of ${job.platform}:${job.id} is failed. Error logs:\n\`\`\`\n${stderr}\`\`\``
+            createComment(
+              `@${i.user.login}, your clip of ${job.platform}:${job.id} is failed. Error logs:\n\`\`\`\n${stderr}\`\`\``
             );
+            editAndMarkNoclip(i.id, originalBody);
           } else {
             console.log(`Task by @${i.user.login} is finished.`);
-            editComment(
-              i.id,
-              `${originalBody}\n\n---\n\n@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).`
+            createComment(
+              `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).`
             );
+            editAndMarkNoclip(i.id, originalBody);
           }
           console.log("-----------------------------------------");
         }
@@ -110,7 +110,16 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
   console.log(`-- Round Finished: ${new Date().toLocaleString()} --`);
 }
 
-function editComment(comment_id, body) {
+function createComment(body) {
+  octokit.issues.createComment({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    issue_number: REPO_ISSUE_ID,
+    body: body,
+  });
+}
+
+function editAndMarkNoclip(comment_id, body) {
   octokit.issues.updateComment({
     owner: REPO_OWNER,
     repo: REPO_NAME,
