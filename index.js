@@ -49,18 +49,25 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
       continue;
     }
     let shell = undefined;
+    let finalFilename = `${job.id}--${job.parsedFrom}--${job.parsedTo}.mp3`;
     if (job.platform === "youtube") {
-      shell = await getYoutubeCase(job.id, job.parsedFrom, job.parsedTo).catch(
-        (x) => {
-          console.error("Error getting YouTube video:", x);
-        }
-      );
+      shell = await getYoutubeCase(
+        job.id,
+        job.parsedFrom,
+        job.parsedTo,
+        finalFilename
+      ).catch((x) => {
+        console.error("Error getting YouTube video:", x);
+      });
     } else if (job.platform === "bilibili") {
-      shell = await getBilibiliCase(job.id, job.parsedFrom, job.parsedTo).catch(
-        (x) => {
-          console.error("Error getting Bilibili video:", x);
-        }
-      );
+      shell = await getBilibiliCase(
+        job.id,
+        job.parsedFrom,
+        job.parsedTo,
+        finalFilename
+      ).catch((x) => {
+        console.error("Error getting Bilibili video:", x);
+      });
     }
     if (!shell) {
       continue;
@@ -159,14 +166,14 @@ async function getBilibiliCase(videoId, fromValue, toValue) {
 -acodec libmp3lame \
 -ab 192k \
 -af loudnorm=I=-16:TP=-2:LRA=11 \
-${BASEDIR}/output-${videoId}-${fromValue}-${toValue}.mp3 && rm ${randstr}.flv`;
+${BASEDIR}/${filename} && rm ${randstr}.flv`;
 }
 
-async function getYoutubeCase(videoId, fromValue, toValue) {
+async function getYoutubeCase(videoId, fromValue, toValue, filename) {
   let format = await probeYTAudioFormat(videoId);
   let formatid = format === "webm" ? 251 : 140;
   console.log(`Finding ${formatid}:${format} for ${videoId}`);
-  let fn = `${videoId}-${fromValue}-${toValue}`;
+  let fn = `${videoId}--${fromValue}--${toValue}`;
   return `${FFMPEG_PATH} -i $(${YOUTUBE_DL_PATH} -f ${formatid} -g "https://www.youtube.com/watch?v=${videoId}") \
 -ss ${fromValue} \
 -to ${toValue} \
@@ -176,7 +183,7 @@ ${FFMPEG_PATH} -i interm-${fn}.${format} \
 -acodec libmp3lame \
 -ab 192k \
 -af loudnorm=I=-16:TP=-2:LRA=11 \
-${BASEDIR}/output-${fn}.mp3 && \
+${BASEDIR}/${filename} && \
 rm interm-${fn}.${format}`;
 }
 
