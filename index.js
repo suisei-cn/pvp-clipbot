@@ -66,6 +66,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     if (i.body.includes("!noclip")) continue;
     let cmdline = i.body.split("\n")[0];
     let query = cmdline.replace(/ +/g, " ").split(" ");
+    let do_pr = i.body.includes(" pr ");
     if (query[0] !== "/clip") continue;
     let job = getJob({
       platform: query[1],
@@ -111,7 +112,8 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     if (fsExists && !cmdline.includes("force")) {
       console.log("Already done:", job);
       createComment(
-        `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``
+        `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``,
+        do_pr
       );
       editAndMarkNoclip(i.id, originalBody);
       continue;
@@ -140,7 +142,8 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
           } else {
             console.log(`Task by @${i.user.login} is finished.`);
             createComment(
-              `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``
+              `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``,
+              do_pr
             );
             editAndMarkNoclip(i.id, originalBody);
           }
@@ -152,12 +155,12 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
   console.log(`-- Round Finished: ${new Date().toLocaleString()} --`);
 }
 
-function createComment(body) {
+function createComment(body, pr = false) {
   octokit.issues.createComment({
     owner: REPO_OWNER,
     repo: REPO_NAME,
     issue_number: REPO_ISSUE_ID,
-    body: body,
+    body: body + pr ? "\n/actions pr this" : "",
   });
 }
 
