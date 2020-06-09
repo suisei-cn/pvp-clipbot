@@ -111,7 +111,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     if (fsExists && !cmdline.includes("force")) {
       console.log("Already done:", job);
       createComment(
-        `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).`
+        `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``
       );
       editAndMarkNoclip(i.id, originalBody);
       continue;
