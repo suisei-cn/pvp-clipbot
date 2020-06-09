@@ -160,7 +160,7 @@ function createComment(body, pr = false) {
     owner: REPO_OWNER,
     repo: REPO_NAME,
     issue_number: REPO_ISSUE_ID,
-    body: body + pr ? "\n/actions pr this" : "",
+    body: body + (pr ? "\n/actions pr this" : ""),
   });
 }
 
