@@ -19,6 +19,34 @@ const octokit = new Octokit({
   auth: GH_TOKEN,
 });
 
+function findAndReturnJSON(text) {
+  try {
+    return JSON.parse(
+      text.replace(/[\n\r ]+```[\n\r ]+/g, "```").match(/```([\w\W]*)```/)[1]
+    );
+  } catch (e) {
+    return {};
+  }
+}
+
+function prettify(obj) {
+  return JSON.stringify(obj, null, 4);
+}
+
+function generateSoundInfo(job, originInfo, filename) {
+  return Object.assign(originInfo, {
+    file: filename,
+    metadata: {
+      site: job.platform,
+      identifier: job.id,
+      time: {
+        from: job.parsedFrom,
+        to: job.parsedTo,
+      },
+    },
+  });
+}
+
 async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
   console.log(`-- Round Started: ${new Date().toLocaleString()} --`);
   let list = await octokit.issues
@@ -73,7 +101,11 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
       continue;
     }
     let originalBody = i.body;
-    let finalFilename = `output-${job.id}-${job.parsedFrom}-${job.parsedTo}.mp3`;
+    const givenInfo = findAndReturnJSON(i.body);
+    const finalObjStr = prettify(
+      generateSoundInfo(job, givenInfo, finalFilename)
+    );
+    console.log("Gonna give:", finalObjStr);
     console.log("-----------------------------------------");
     let fsExists = fs.existsSync(BASEDIR + "/" + finalFilename);
     if (fsExists && !cmdline.includes("force")) {
@@ -108,7 +140,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
           } else {
             console.log(`Task by @${i.user.login} is finished.`);
             createComment(
-              `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).`
+              `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``
             );
             editAndMarkNoclip(i.id, originalBody);
           }
@@ -157,7 +189,7 @@ async function probeYTAudioFormat(vid) {
   return out.search(/^251/m) !== -1 ? "webm" : "m4a";
 }
 
-async function getBilibiliCase(videoId, fromValue, toValue) {
+async function getBilibiliCase(videoId, fromValue, toValue, filename) {
   let randstr = String(Math.random());
   return `${YKDL_PATH} https://www.bilibili.com/video/${videoId} -O ${randstr} &&
     ${FFMPEG_PATH} -i ${randstr}.flv \
