@@ -3,6 +3,9 @@ const { exec } = require("child_process");
 const { Octokit } = require("@octokit/rest");
 const fs = require("fs");
 
+const YOUTUBE_DL_PATH = "/usr/bin/youtube-dl";
+const YKDL_PATH = "/home/admin/.local/bin/ykdl";
+const FFMPEG_PATH = "ffmpeg";
 // Config
 const GH_TOKEN = "TOKEN";
 const BASEDIR = "/home/suisei/clips";
@@ -142,15 +145,15 @@ async function getStdoutOf(cmd) {
 
 async function probeYTAudioFormat(vid) {
   const out = await getStdoutOf(
-    `/usr/bin/youtube-dl -F "https://www.youtube.com/watch?v=${vid}"`
+    `${YOUTUBE_DL_PATH} -F "https://www.youtube.com/watch?v=${vid}"`
   );
   return out.search(/^251/m) !== -1 ? "webm" : "m4a";
 }
 
 async function getBilibiliCase(videoId, fromValue, toValue) {
   let randstr = String(Math.random());
-  return `/home/admin/.local/bin/ykdl https://www.bilibili.com/video/${videoId} -O ${randstr} &&
-    ffmpeg -i ${randstr}.flv \
+  return `${YKDL_PATH} https://www.bilibili.com/video/${videoId} -O ${randstr} &&
+    ${FFMPEG_PATH} -i ${randstr}.flv \
 -ss ${fromValue} \
 -to ${toValue} \
 -acodec libmp3lame \
@@ -164,12 +167,12 @@ async function getYoutubeCase(videoId, fromValue, toValue) {
   let formatid = format === "webm" ? 251 : 140;
   console.log(`Finding ${formatid}:${format} for ${videoId}`);
   let fn = `${videoId}-${fromValue}-${toValue}`;
-  return `ffmpeg -i $(/usr/bin/youtube-dl -f ${formatid} -g "https://www.youtube.com/watch?v=${videoId}") \
+  return `${FFMPEG_PATH} -i $(${YOUTUBE_DL_PATH} -f ${formatid} -g "https://www.youtube.com/watch?v=${videoId}") \
 -ss ${fromValue} \
 -to ${toValue} \
 -c copy \
 interm-${fn}.${format} && \
-ffmpeg -i interm-${fn}.${format} \
+${FFMPEG_PATH} -i interm-${fn}.${format} \
 -acodec libmp3lame \
 -ab 192k \
 -af loudnorm=I=-16:TP=-2:LRA=11 \
