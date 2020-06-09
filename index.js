@@ -225,7 +225,7 @@ function parseTime(str) {
   if (time === null) return -1;
   let ret =
     Number(time[1] || 0) * 60 + Number(time[2]) + Number(time[4] || 0) * 0.1;
-  if (ret == NaN) return -1;
+  if (isNaN(ret)) return -1;
   return ret;
 }
 
