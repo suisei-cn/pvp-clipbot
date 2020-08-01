@@ -21,9 +21,11 @@ const octokit = new Octokit({
 });
 
 function findAndReturnMeta(text) {
-  const data = text
+  const ret = text
     .replace(/[\n\r ]+```[\n\r ]+/g, '```')
-    .match(/```([\w\W]*)```/)[1];
+    .match(/```([\w\W]*)```/)
+  if (ret.length < 2) return {};
+  const data = ret[1];
   try {
     return JSON.parse(data);
   } catch (_) {
