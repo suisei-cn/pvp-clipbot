@@ -2,6 +2,7 @@
 const { exec } = require("child_process");
 const { Octokit } = require("@octokit/rest");
 const fs = require("fs");
+const yaml = require("js-yaml");
 
 const YOUTUBE_DL_PATH = "/usr/bin/youtube-dl";
 const YKDL_PATH = "/home/admin/.local/bin/ykdl";
@@ -19,14 +20,21 @@ const octokit = new Octokit({
   auth: GH_TOKEN,
 });
 
-function findAndReturnJSON(text) {
+function findAndReturnMeta(text) {
+  const data = text
+    .replace(/[\n\r ]+```[\n\r ]+/g, '```')
+    .match(/```([\w\W]*)```/)[1];
   try {
-    return JSON.parse(
-      text.replace(/[\n\r ]+```[\n\r ]+/g, "```").match(/```([\w\W]*)```/)[1]
-    );
-  } catch (e) {
-    return {};
+    return JSON.parse(data);
+  } catch (_) {
+    //
   }
+  try {
+    return yaml.safeLoad(data);
+  } catch (_) {
+    //
+  }
+  return {};
 }
 
 function prettify(obj) {
@@ -102,7 +110,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
       continue;
     }
     let originalBody = i.body;
-    const givenInfo = findAndReturnJSON(i.body);
+    const givenInfo = findAndReturnMeta(i.body);
     const finalObjStr = prettify(
       generateSoundInfo(job, givenInfo, finalFilename)
     );
