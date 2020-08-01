@@ -24,7 +24,7 @@ function findAndReturnMeta(text) {
   const ret = text
     .replace(/[\n\r ]+```[\n\r ]+/g, '```')
     .match(/```([\w\W]*)```/)
-  if (ret.length < 2) return {};
+  if (!ret || ret.length < 2) return {};
   const data = ret[1];
   try {
     return JSON.parse(data);
