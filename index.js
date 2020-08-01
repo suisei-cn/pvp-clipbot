@@ -3,6 +3,9 @@ const { exec } = require("child_process");
 const { Octokit } = require("@octokit/rest");
 const fs = require("fs");
 const yaml = require("js-yaml");
+const unified = require("unified");
+const markdown = require("remark-parse");
+const processor = unified().use(markdown, { gfm: true });
 
 const YOUTUBE_DL_PATH = "/usr/bin/youtube-dl";
 const YKDL_PATH = "/home/admin/.local/bin/ykdl";
@@ -20,12 +23,17 @@ const octokit = new Octokit({
   auth: GH_TOKEN,
 });
 
+function getFirstCodeBlockText(md) {
+  try {
+    const blk = processor.parse(md);
+    return blk.children.filter((x) => x.type === "code")[0].value;
+  } catch (_) {
+    return "";
+  }
+}
+
 function findAndReturnMeta(text) {
-  const ret = text
-    .replace(/[\n\r ]+```[\n\r ]+/g, '```')
-    .match(/```([\w\W]*)```/)
-  if (!ret || ret.length < 2) return {};
-  const data = ret[1];
+  const data = getFirstCodeBlockText(text);
   try {
     return JSON.parse(data);
   } catch (_) {

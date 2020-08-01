@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "@octokit/rest": "^17.6.0",
-    "js-yaml": "^3.14.0"
+    "js-yaml": "^3.14.0",
+    "remark-parse": "^8.0.3",
+    "unified": "^9.1.0"
   },
   "name": "pvp-clipbot",
   "version": "1.0.0",
