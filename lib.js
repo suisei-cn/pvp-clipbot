@@ -7,20 +7,21 @@ const unified = require("unified");
 const markdown = require("remark-parse");
 const processor = unified().use(markdown, { gfm: true });
 
-const YOUTUBE_DL_PATH = "/usr/bin/youtube-dl";
-const YKDL_PATH = "/home/admin/.local/bin/ykdl";
-const FFMPEG_PATH = "ffmpeg";
-// Config
-const GH_TOKEN = "TOKEN";
-const BASEDIR = "/home/suisei/clips";
-const WEBPAGE_ROOT = "https://suisei.outv.im/clips";
-const TRUSTED_USERS = [];
-const REPO_OWNER = "suisei-cn";
-const REPO_NAME = "starbuttons";
-const REPO_ISSUE_ID = 5;
+let globalConfig = {
+  YOUTUBE_DL_PATH: "/usr/bin/youtube-dl",
+  YKDL_PATH: "/usr/bin/ykdl",
+  FFMPEG_PATH: "/usr/bin/ffmpeg",
+  GH_TOKEN: "TOKEN",
+  BASEDIR: "/home/user/clips",
+  WEBPAGE_ROOT: "http://localhost/clips",
+  TRUSTED_USERS: [],
+  REPO_OWNER: "org",
+  REPO_NAME: "repo",
+  REPO_ISSUE_ID: 1,
+};
 
-const octokit = new Octokit({
-  auth: GH_TOKEN,
+let octokit = new Octokit({
+  auth: "",
 });
 
 function getFirstCodeBlockText(md) {
@@ -69,9 +70,9 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
   console.log(`-- Round Started: ${new Date().toLocaleString()} --`);
   let list = await octokit.issues
     .listComments({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
-      issue_number: REPO_ISSUE_ID,
+      owner: globalConfig.REPO_OWNER,
+      repo: globalConfig.REPO_NAME,
+      issue_number: globalConfig.REPO_ISSUE_ID,
       since,
     })
     .then((x) => x.data)
@@ -80,7 +81,8 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
       return [];
     });
   for (const i of list) {
-    if (!TRUSTED_USERS.includes(i.user.login.toLowerCase())) continue;
+    if (!globalConfig.TRUSTED_USERS.includes(i.user.login.toLowerCase()))
+      continue;
     if (i.body.includes("!noclip")) continue;
     let cmdline = i.body.split("\n")[0];
     let query = cmdline.replace(/ +/g, " ").split(" ");
@@ -126,18 +128,18 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     );
     console.log("Gonna give:", finalObjStr);
     console.log("-----------------------------------------");
-    let fsExists = fs.existsSync(BASEDIR + "/" + finalFilename);
+    let fsExists = fs.existsSync(globalConfig.BASEDIR + "/" + finalFilename);
     if (fsExists && !cmdline.includes("force")) {
       console.log("Already done:", job);
       createComment(
-        `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``,
+        `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${globalConfig.WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``,
         do_pr
       );
       editAndMarkNoclip(i.id, originalBody);
       continue;
     }
     if (fsExists) {
-      fs.unlinkSync(BASEDIR + "/" + finalFilename);
+      fs.unlinkSync(globalConfig.BASEDIR + "/" + finalFilename);
     }
     (async () => {
       editAndMarkNoclip(
@@ -160,7 +162,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
           } else {
             console.log(`Task by @${i.user.login} is finished.`);
             createComment(
-              `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``,
+              `@${i.user.login}, your clip of ${job.platform}:${job.id} is ready at [here](${globalConfig.WEBPAGE_ROOT}/${finalFilename}).\n\n\`\`\`\n${finalObjStr}\n\`\`\``,
               do_pr
             );
             editAndMarkNoclip(i.id, originalBody);
@@ -175,17 +177,17 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
 
 function createComment(body, pr = false) {
   octokit.issues.createComment({
-    owner: REPO_OWNER,
-    repo: REPO_NAME,
-    issue_number: REPO_ISSUE_ID,
+    owner: globalConfig.REPO_OWNER,
+    repo: globalConfig.REPO_NAME,
+    issue_number: globalConfig.REPO_ISSUE_ID,
     body: body + (pr ? "\n/actions pr this" : ""),
   });
 }
 
 function editAndMarkNoclip(comment_id, body) {
   octokit.issues.updateComment({
-    owner: REPO_OWNER,
-    repo: REPO_NAME,
+    owner: globalConfig.REPO_OWNER,
+    repo: globalConfig.REPO_NAME,
     comment_id,
     body: body + "\n<!-- !noclip -->",
   });
@@ -205,21 +207,21 @@ async function getStdoutOf(cmd) {
 
 async function probeYTAudioFormat(vid) {
   const out = await getStdoutOf(
-    `${YOUTUBE_DL_PATH} -F "https://www.youtube.com/watch?v=${vid}"`
+    `${globalConfig.YOUTUBE_DL_PATH} -F "https://www.youtube.com/watch?v=${vid}"`
   );
   return out.search(/^251/m) !== -1 ? "webm" : "m4a";
 }
 
 async function getBilibiliCase(videoId, fromValue, toValue, filename) {
   let randstr = String(Math.random());
-  return `${YKDL_PATH} https://www.bilibili.com/video/${videoId} -O ${randstr} &&
-    ${FFMPEG_PATH} -i ${randstr}.flv \
+  return `${globalConfig.YKDL_PATH} https://www.bilibili.com/video/${videoId} -O ${randstr} &&
+    ${globalConfig.FFMPEG_PATH} -i ${randstr}.flv \
 -ss ${fromValue} \
 -to ${toValue} \
 -acodec libmp3lame \
 -ab 192k \
 -af loudnorm=I=-16:TP=-2:LRA=11 \
-${BASEDIR}/${filename} && rm ${randstr}.flv`;
+${globalConfig.BASEDIR}/${filename} && rm ${randstr}.flv`;
 }
 
 async function getYoutubeCase(videoId, fromValue, toValue, filename) {
@@ -227,16 +229,16 @@ async function getYoutubeCase(videoId, fromValue, toValue, filename) {
   let formatid = format === "webm" ? 251 : 140;
   console.log(`Finding ${formatid}:${format} for ${videoId}`);
   let fn = `${videoId}--${fromValue}--${toValue}`;
-  return `${FFMPEG_PATH} -i $(${YOUTUBE_DL_PATH} -f ${formatid} -g "https://www.youtube.com/watch?v=${videoId}") \
+  return `${globalConfig.FFMPEG_PATH} -i $(${globalConfig.YOUTUBE_DL_PATH} -f ${formatid} -g "https://www.youtube.com/watch?v=${videoId}") \
 -ss ${fromValue} \
 -to ${toValue} \
 -c copy \
 interm-${fn}.${format} && \
-${FFMPEG_PATH} -i interm-${fn}.${format} \
+${globalConfig.FFMPEG_PATH} -i interm-${fn}.${format} \
 -acodec libmp3lame \
 -ab 192k \
 -af loudnorm=I=-16:TP=-2:LRA=11 \
-${BASEDIR}/${filename} && \
+${globalConfig.BASEDIR}/${filename} && \
 rm interm-${fn}.${format}`;
 }
 
@@ -267,4 +269,16 @@ function getJob(obj) {
   };
 }
 
-getIssueAndDo(new Date(new Date() - 12000000).toISOString());
+function setConfig(obj) {
+  globalConfig = Object.assign(globalConfig, obj);
+  console.info("Config set to:", globalConfig);
+  octokit = new Octokit({
+    auth: globalConfig.GH_TOKEN,
+  });
+}
+
+module.exports = {
+  setConfig,
+  getIssueAndDo,
+  findAndReturnMeta,
+};
