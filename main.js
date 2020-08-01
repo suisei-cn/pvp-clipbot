@@ -1,4 +1,4 @@
-import { setConfig, getIssueAndDo } from "./lib";
+const { setConfig, getIssueAndDo } = require("./lib");
 
 setConfig({
   YOUTUBE_DL_PATH: "/usr/bin/youtube-dl",
