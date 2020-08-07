@@ -7,16 +7,16 @@ Monitor issue comments and clip the audio.
 
 ``` js
 setConfig({
-  YOUTUBE_DL_PATH: "/usr/bin/youtube-dl",        # youtube-dl path (for YouTube)
-  YKDL_PATH: "/home/admin/.local/bin/ykdl",      # ykdl path (for Bilibili)
-  FFMPEG_PATH: "ffmpeg",                         # ffmpeg path
-  GH_TOKEN: "TOKEN",                             # Personal access token
-  BASEDIR: "/home/suisei/clips",                 # Clip destination directory
-  WEBPAGE_ROOT: "https://suisei.outv.im/clips",  # Public URL of BASEDIR
-  TRUSTED_USERS: [],                             # Allowed user list (username in all lowercase)
-  REPO_OWNER: "suisei-cn",                       # Issue user/organization name
-  REPO_NAME: "starbuttons",                      # Issue repository name
-  REPO_ISSUE_ID: 5,                              # Issue number
+  YOUTUBE_DL_PATH: "/usr/bin/youtube-dl",        // youtube-dl path (for YouTube)
+  YKDL_PATH: "/home/admin/.local/bin/ykdl",      // ykdl path (for Bilibili)
+  FFMPEG_PATH: "ffmpeg",                         // ffmpeg path
+  GH_TOKEN: "TOKEN",                             // Personal access token
+  BASEDIR: "/home/suisei/clips",                 // Clip destination directory
+  WEBPAGE_ROOT: "https://suisei.outv.im/clips",  // Public URL of BASEDIR
+  TRUSTED_USERS: [],                             // Allowed user list (username in all lowercase)
+  REPO_OWNER: "suisei-cn",                       // Issue user/organization name
+  REPO_NAME: "starbuttons",                      // Issue repository name
+  REPO_ISSUE_ID: 5,                              // Issue number
 });
 ```
 
