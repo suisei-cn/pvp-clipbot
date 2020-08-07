@@ -11,8 +11,8 @@ setConfig({
   YKDL_PATH: "/home/admin/.local/bin/ykdl",      # ykdl path (for Bilibili)
   FFMPEG_PATH: "ffmpeg",                         # ffmpeg path
   GH_TOKEN: "TOKEN",                             # Personal access token
-  BASEDIR: "/home/suisei/clips",                 # 
-  WEBPAGE_ROOT: "https://suisei.outv.im/clips",  #
+  BASEDIR: "/home/suisei/clips",                 # Clip destination directory
+  WEBPAGE_ROOT: "https://suisei.outv.im/clips",  # Public URL of BASEDIR
   TRUSTED_USERS: [],                             # Allowed user list (username in all lowercase)
   REPO_OWNER: "suisei-cn",                       # Issue user/organization name
   REPO_NAME: "starbuttons",                      # Issue repository name
@@ -28,3 +28,6 @@ getIssueAndDo(new Date(new Date() - 12000000).toISOString());
 ```
 
 Then run this periodically (e.g. put it in `crontab`).
+
+## License
+MIT
