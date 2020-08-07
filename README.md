@@ -23,7 +23,7 @@ setConfig({
 Also tweak this in `main.js` if you want to change the filter settings:
 
 ``` js
-# Ignore comments older than 200 minutes (200 * 60 * 1000 = 12,000,000 ms)
+// Ignore comments older than 200 minutes (200 * 60 * 1000 = 12,000,000 ms)
 getIssueAndDo(new Date(new Date() - 12000000).toISOString());
 ```
 
