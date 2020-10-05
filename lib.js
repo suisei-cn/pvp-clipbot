@@ -9,8 +9,7 @@ const processor = unified().use(markdown, { gfm: true });
 
 let globalConfig = {
   YOUTUBE_DL_PATH: "/usr/bin/youtube-dl",
-  YKDL_PATH: "/usr/bin/ykdl",
-  FFMPEG_PATH: "/usr/bin/ffmpeg",
+  FFMPEG_PATH: "",
   GH_TOKEN: "TOKEN",
   BASEDIR: "/home/user/clips",
   WEBPAGE_ROOT: "http://localhost/clips",
@@ -100,7 +99,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
     let shell = undefined;
     let finalFilename = `${job.id}--${job.parsedFrom}--${job.parsedTo}.mp3`;
     if (job.platform === "youtube") {
-      shell = await getYoutubeCase(
+      shell = getYoutubeCase(
         job.id,
         job.parsedFrom,
         job.parsedTo,
@@ -109,7 +108,7 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
         console.error("Error getting YouTube video:", x);
       });
     } else if (job.platform === "bilibili") {
-      shell = await getBilibiliCase(
+      shell = getBilibiliCase(
         job.id,
         job.parsedFrom,
         job.parsedTo,
@@ -212,34 +211,18 @@ async function probeYTAudioFormat(vid) {
   return out.search(/^251/m) !== -1 ? "webm" : "m4a";
 }
 
-async function getBilibiliCase(videoId, fromValue, toValue, filename) {
-  let randstr = String(Math.random());
-  return `${globalConfig.YKDL_PATH} https://www.bilibili.com/video/${videoId} -O ${randstr} &&
-    ${globalConfig.FFMPEG_PATH} -i ${randstr}.flv \
--ss ${fromValue} \
--to ${toValue} \
--acodec libmp3lame \
--ab 192k \
--af loudnorm=I=-16:TP=-2:LRA=11 \
-${globalConfig.BASEDIR}/${filename} && rm ${randstr}.flv`;
+function getBilibiliCase(videoId, fromValue, toValue, filename) {
+  return `youtube-dl -f 0 "https://www.bilibili.com/video/${videoId}" \\
+-x --audio-format mp3 --audio-quality 192k \\
+--postprocessor-args "-ss ${fromValue} -to ${toValue} -af loudnorm=I=-16:TP=-2:LRA=11" \\
+-o "${globalConfig.BASEDIR}/${filename}"` + (globalConfig.FFMPEG_PATH ? ` --ffmpeg-location "${globalConfig.FFMPEG_PATH}"` : "")
 }
 
-async function getYoutubeCase(videoId, fromValue, toValue, filename) {
-  let format = await probeYTAudioFormat(videoId);
-  let formatid = format === "webm" ? 251 : 140;
-  console.log(`Finding ${formatid}:${format} for ${videoId}`);
-  let fn = `${videoId}--${fromValue}--${toValue}`;
-  return `${globalConfig.FFMPEG_PATH} -i $(${globalConfig.YOUTUBE_DL_PATH} -f ${formatid} -g "https://www.youtube.com/watch?v=${videoId}") \
--ss ${fromValue} \
--to ${toValue} \
--c copy \
-interm-${fn}.${format} && \
-${globalConfig.FFMPEG_PATH} -i interm-${fn}.${format} \
--acodec libmp3lame \
--ab 192k \
--af loudnorm=I=-16:TP=-2:LRA=11 \
-${globalConfig.BASEDIR}/${filename} && \
-rm interm-${fn}.${format}`;
+function getYoutubeCase(videoId, fromValue, toValue, filename) {
+  return `youtube-dl -f 0 "https://www.youtube.com/watch?v=${videoId}" \\
+-x --audio-format mp3 --audio-quality 192k \\
+--postprocessor-args "-ss ${fromValue} -to ${toValue} -af loudnorm=I=-16:TP=-2:LRA=11" \\
+-o "${globalConfig.BASEDIR}/${filename}"` + (globalConfig.FFMPEG_PATH ? ` --ffmpeg-location "${globalConfig.FFMPEG_PATH}"` : "")
 }
 
 function parseTime(str) {
