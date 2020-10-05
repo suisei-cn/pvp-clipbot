@@ -103,18 +103,14 @@ async function getIssueAndDo(since = "2020-01-01T00:00:00Z") {
         job.parsedFrom,
         job.parsedTo,
         finalFilename
-      ).catch((x) => {
-        console.error("Error getting YouTube video:", x);
-      });
+      )
     } else if (job.platform === "bilibili") {
       shell = getBilibiliCase(
         job.id,
         job.parsedFrom,
         job.parsedTo,
         finalFilename
-      ).catch((x) => {
-        console.error("Error getting Bilibili video:", x);
-      });
+      )
     }
     if (!shell) {
       continue;
