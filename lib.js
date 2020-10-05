@@ -41,7 +41,7 @@ function findAndReturnMeta(text) {
     //
   }
   try {
-    return yaml.safeLoad(data);
+    return yaml.safeLoad(data) || {};
   } catch (_) {
     //
   }
