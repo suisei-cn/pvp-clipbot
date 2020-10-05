@@ -9,7 +9,6 @@ const processor = unified().use(markdown, { gfm: true });
 
 let globalConfig = {
   YOUTUBE_DL_PATH: "/usr/bin/youtube-dl",
-  FFMPEG_PATH: "",
   GH_TOKEN: "TOKEN",
   BASEDIR: "/home/user/clips",
   WEBPAGE_ROOT: "http://localhost/clips",
